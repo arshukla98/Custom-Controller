@@ -1,0 +1,6 @@
+apiVersion: upgrade.k8s.io/v1
+kind: UpgradeKube
+metadata:
+  name: example-kube1
+spec:
+
