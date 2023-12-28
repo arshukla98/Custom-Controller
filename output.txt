@@ -1,0 +1,60 @@
+Beginning in main....
+passing kubeconfig 1
+passing kubeconfig 2
+passing kubeconfig 3
+passing queue
+passing informers
+Setting up event handlers
+Run controller with 1 workers
+Starting <NAME> controller
+Started workers
+Begin runWorker
+Begin processNextWorkItem
+Adding key: default/example-kube1
+obj: &{{ } {example-kube1  default  0d0d5612-751e-4e08-8e42-26e1730cd41d 1524 1 2023-12-28 07:17:44 -0500 EST <nil> <nil> map[] map[] [] [] [{kubectl-create Update upgrade.k8s.io/v1 2023-12-28 07:17:44 -0500 EST FieldsV1 {"f:spec":{".":{},"f:deploymentTemplate":{".":{},"f:imageName":{},"f:name":{},"f:namespace":{},"f:replicas":{}},"f:serviceTemplate":{".":{},"f:name":{},"f:servicePort":{},"f:type":{}}}} }]} {{nginx default 3 nginx:alpine} {nginx-svc NodePort 80}} {false false}}
+processNextWorkItem key: default/example-kube1
+In syncHandler:  default/example-kube1
+SyncHandler Before ProcessKubeUpgrade: &{{ } {example-kube1  default  0d0d5612-751e-4e08-8e42-26e1730cd41d 1524 1 2023-12-28 07:17:44 -0500 EST <nil> <nil> map[] map[] [] [] [{kubectl-create Update upgrade.k8s.io/v1 2023-12-28 07:17:44 -0500 EST FieldsV1 {"f:spec":{".":{},"f:deploymentTemplate":{".":{},"f:imageName":{},"f:name":{},"f:namespace":{},"f:replicas":{}},"f:serviceTemplate":{".":{},"f:name":{},"f:servicePort":{},"f:type":{}}}} }]} {{nginx default 3 nginx:alpine} {nginx-svc NodePort 80}} {false false}}
+Entering ProcessKubeUpgrade
+ProcessKubeUpgrade ukDeep.Status: {false false}
+ProcessKubeUpgrade ukDeep.Status.DepCreated: false
+ProcessKubeUpgrade Updating ukDeep.Status.DepCreated: true
+ProcessKubeUpgrade ukDeep.Status: {true false}
+ProcessKubeUpgrade ukDeep.Status.SvcCreated: false
+ProcessKubeUpgrade Updating ukDeep.Status.SvcCreated: true
+Resource needs to be updated.
+Exiting ProcessKubeUpgrade
+SyncHandler Returning from ProcessKubeUpgrade: &{{ } {example-kube1  default  0d0d5612-751e-4e08-8e42-26e1730cd41d 1524 1 2023-12-28 07:17:44 -0500 EST <nil> <nil> map[] map[] [] [] [{kubectl-create Update upgrade.k8s.io/v1 2023-12-28 07:17:44 -0500 EST FieldsV1 {"f:spec":{".":{},"f:deploymentTemplate":{".":{},"f:imageName":{},"f:name":{},"f:namespace":{},"f:replicas":{}},"f:serviceTemplate":{".":{},"f:name":{},"f:servicePort":{},"f:type":{}}}} }]} {{nginx default 3 nginx:alpine} {nginx-svc NodePort 80}} {true true}}
+SyncHandler: After Update ukDeep.Status: {true true}
+old: &{{ } {example-kube1  default  0d0d5612-751e-4e08-8e42-26e1730cd41d 1524 1 2023-12-28 07:17:44 -0500 EST <nil> <nil> map[] map[] [] [] [{kubectl-create Update upgrade.k8s.io/v1 2023-12-28 07:17:44 -0500 EST FieldsV1 {"f:spec":{".":{},"f:deploymentTemplate":{".":{},"f:imageName":{},"f:name":{},"f:namespace":{},"f:replicas":{}},"f:serviceTemplate":{".":{},"f:name":{},"f:servicePort":{},"f:type":{}}}} }]} {{nginx default 3 nginx:alpine} {nginx-svc NodePort 80}} {false false}}
+newo: &{{ } {example-kube1  default  0d0d5612-751e-4e08-8e42-26e1730cd41d 1588 1 2023-12-28 07:17:44 -0500 EST <nil> <nil> map[] map[] [] [] [{kubectl-create Update upgrade.k8s.io/v1 2023-12-28 07:17:44 -0500 EST FieldsV1 {"f:spec":{".":{},"f:deploymentTemplate":{".":{},"f:imageName":{},"f:name":{},"f:namespace":{},"f:replicas":{}},"f:serviceTemplate":{".":{},"f:name":{},"f:servicePort":{},"f:type":{}}}} } {sample Update upgrade.k8s.io/v1 2023-12-28 07:18:29 -0500 EST FieldsV1 {"f:status":{".":{},"f:DepCreated":{},"f:SvcCreated":{}}} status}]} {{nginx default 3 nginx:alpine} {nginx-svc NodePort 80}} {true true}}
+processNextWorkItem Forget key: default/example-kube1
+Updating key: default/example-kube1
+UpgradeKube Updated: 
+End processNextWorkItem
+Thu Dec 28 07:18:59 EST 2023
+i: 1
+Begin processNextWorkItem
+processNextWorkItem key: default/example-kube1
+In syncHandler:  default/example-kube1
+SyncHandler Before ProcessKubeUpgrade: &{{ } {example-kube1  default  0d0d5612-751e-4e08-8e42-26e1730cd41d 1588 1 2023-12-28 07:17:44 -0500 EST <nil> <nil> map[] map[] [] [] [{kubectl-create Update upgrade.k8s.io/v1 2023-12-28 07:17:44 -0500 EST FieldsV1 {"f:spec":{".":{},"f:deploymentTemplate":{".":{},"f:imageName":{},"f:name":{},"f:namespace":{},"f:replicas":{}},"f:serviceTemplate":{".":{},"f:name":{},"f:servicePort":{},"f:type":{}}}} } {sample Update upgrade.k8s.io/v1 2023-12-28 07:18:29 -0500 EST FieldsV1 {"f:status":{".":{},"f:DepCreated":{},"f:SvcCreated":{}}} status}]} {{nginx default 3 nginx:alpine} {nginx-svc NodePort 80}} {true true}}
+Entering ProcessKubeUpgrade
+ProcessKubeUpgrade ukDeep.Status: {true true}
+ProcessKubeUpgrade ukDeep.Status.DepCreated: true
+ProcessKubeUpgrade ukDeep.Status: {true true}
+ProcessKubeUpgrade ukDeep.Status.SvcCreated: true
+Resource did not need to be updated.
+Exiting ProcessKubeUpgrade
+processNextWorkItem Forget key: default/example-kube1
+End processNextWorkItem
+Thu Dec 28 07:19:59 EST 2023
+i: 2
+Begin processNextWorkItem
+old: &{{ } {example-kube1  default  0d0d5612-751e-4e08-8e42-26e1730cd41d 1588 1 2023-12-28 07:17:44 -0500 EST <nil> <nil> map[] map[] [] [] [{kubectl-create Update upgrade.k8s.io/v1 2023-12-28 07:17:44 -0500 EST FieldsV1 {"f:spec":{".":{},"f:deploymentTemplate":{".":{},"f:imageName":{},"f:name":{},"f:namespace":{},"f:replicas":{}},"f:serviceTemplate":{".":{},"f:name":{},"f:servicePort":{},"f:type":{}}}} } {sample Update upgrade.k8s.io/v1 2023-12-28 07:18:29 -0500 EST FieldsV1 {"f:status":{".":{},"f:DepCreated":{},"f:SvcCreated":{}}} status}]} {{nginx default 3 nginx:alpine} {nginx-svc NodePort 80}} {true true}}
+newo: &{{ } {example-kube1  default  0d0d5612-751e-4e08-8e42-26e1730cd41d 1588 1 2023-12-28 07:17:44 -0500 EST <nil> <nil> map[] map[] [] [] [{kubectl-create Update upgrade.k8s.io/v1 2023-12-28 07:17:44 -0500 EST FieldsV1 {"f:spec":{".":{},"f:deploymentTemplate":{".":{},"f:imageName":{},"f:name":{},"f:namespace":{},"f:replicas":{}},"f:serviceTemplate":{".":{},"f:name":{},"f:servicePort":{},"f:type":{}}}} } {sample Update upgrade.k8s.io/v1 2023-12-28 07:18:29 -0500 EST FieldsV1 {"f:status":{".":{},"f:DepCreated":{},"f:SvcCreated":{}}} status}]} {{nginx default 3 nginx:alpine} {nginx-svc NodePort 80}} {true true}}
+not updated
+old: &{{ } {example-kube1  default  0d0d5612-751e-4e08-8e42-26e1730cd41d 1588 1 2023-12-28 07:17:44 -0500 EST <nil> <nil> map[] map[] [] [] [{kubectl-create Update upgrade.k8s.io/v1 2023-12-28 07:17:44 -0500 EST FieldsV1 {"f:spec":{".":{},"f:deploymentTemplate":{".":{},"f:imageName":{},"f:name":{},"f:namespace":{},"f:replicas":{}},"f:serviceTemplate":{".":{},"f:name":{},"f:servicePort":{},"f:type":{}}}} } {sample Update upgrade.k8s.io/v1 2023-12-28 07:18:29 -0500 EST FieldsV1 {"f:status":{".":{},"f:DepCreated":{},"f:SvcCreated":{}}} status}]} {{nginx default 3 nginx:alpine} {nginx-svc NodePort 80}} {true true}}
+newo: &{{ } {example-kube1  default  0d0d5612-751e-4e08-8e42-26e1730cd41d 1588 1 2023-12-28 07:17:44 -0500 EST <nil> <nil> map[] map[] [] [] [{kubectl-create Update upgrade.k8s.io/v1 2023-12-28 07:17:44 -0500 EST FieldsV1 {"f:spec":{".":{},"f:deploymentTemplate":{".":{},"f:imageName":{},"f:name":{},"f:namespace":{},"f:replicas":{}},"f:serviceTemplate":{".":{},"f:name":{},"f:servicePort":{},"f:type":{}}}} } {sample Update upgrade.k8s.io/v1 2023-12-28 07:18:29 -0500 EST FieldsV1 {"f:status":{".":{},"f:DepCreated":{},"f:SvcCreated":{}}} status}]} {{nginx default 3 nginx:alpine} {nginx-svc NodePort 80}} {true true}}
+not updated
+^CReceived stop signal, attempting graceful termination...
+^CReceived stop signal, terminating immediately!

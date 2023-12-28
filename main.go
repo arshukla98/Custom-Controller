@@ -54,9 +54,9 @@ func main() {
 
 	ctx := context.Background()
 
-	fmt.Println("Run controller with 2 workers")
+	fmt.Println("Run controller with 1 workers")
 
-	if err = c.Run(ctx, 2); err != nil {
+	if err = c.Run(ctx, 1); err != nil {
 		fmt.Println("Error running controller")
 		os.Exit(1)
 	}
