@@ -29,8 +29,16 @@ import (
 func ForKind(kind schema.GroupVersionKind) interface{} {
 	switch kind {
 	// Group=upgrade.k8s.io, Version=v1
+	case v1.SchemeGroupVersion.WithKind("DeploymentTemplate"):
+		return &upgradev1.DeploymentTemplateApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ServiceTemplate"):
+		return &upgradev1.ServiceTemplateApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("UpgradeKube"):
 		return &upgradev1.UpgradeKubeApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("UpgradeKubeSpec"):
+		return &upgradev1.UpgradeKubeSpecApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("UpgradeKubeStatus"):
+		return &upgradev1.UpgradeKubeStatusApplyConfiguration{}
 
 	}
 	return nil

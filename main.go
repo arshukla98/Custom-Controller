@@ -9,7 +9,6 @@ import (
 
 	"context"
 	corev1 "k8s.io/api/core/v1"
-	//kubeinformers "k8s.io/client-go/informers"
 	kubernetes "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -51,7 +50,7 @@ func main() {
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: kubeClient.CoreV1().Events("")})
 	_ = eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: "sample-controller"})
 
-	c := NewController(exampleClient)
+	c := NewController(exampleClient, kubeClient)
 
 	ctx := context.Background()
 

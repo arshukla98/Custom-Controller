@@ -19,7 +19,6 @@ limitations under the License.
 package v1
 
 import (
-	upgradev1 "github.com/arshukla98/sample-controller/pkg/apis/upgrade/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
@@ -30,8 +29,8 @@ import (
 type UpgradeKubeApplyConfiguration struct {
 	v1.TypeMetaApplyConfiguration    `json:",inline"`
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
-	Spec                             *upgradev1.UpgradeKubeSpec   `json:"spec,omitempty"`
-	Status                           *upgradev1.UpgradeKubeStatus `json:"status,omitempty"`
+	Spec                             *UpgradeKubeSpecApplyConfiguration   `json:"spec,omitempty"`
+	Status                           *UpgradeKubeStatusApplyConfiguration `json:"status,omitempty"`
 }
 
 // UpgradeKube constructs an declarative configuration of the UpgradeKube type for use with
@@ -206,15 +205,15 @@ func (b *UpgradeKubeApplyConfiguration) ensureObjectMetaApplyConfigurationExists
 // WithSpec sets the Spec field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Spec field is set to the value of the last call.
-func (b *UpgradeKubeApplyConfiguration) WithSpec(value upgradev1.UpgradeKubeSpec) *UpgradeKubeApplyConfiguration {
-	b.Spec = &value
+func (b *UpgradeKubeApplyConfiguration) WithSpec(value *UpgradeKubeSpecApplyConfiguration) *UpgradeKubeApplyConfiguration {
+	b.Spec = value
 	return b
 }
 
 // WithStatus sets the Status field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Status field is set to the value of the last call.
-func (b *UpgradeKubeApplyConfiguration) WithStatus(value upgradev1.UpgradeKubeStatus) *UpgradeKubeApplyConfiguration {
-	b.Status = &value
+func (b *UpgradeKubeApplyConfiguration) WithStatus(value *UpgradeKubeStatusApplyConfiguration) *UpgradeKubeApplyConfiguration {
+	b.Status = value
 	return b
 }

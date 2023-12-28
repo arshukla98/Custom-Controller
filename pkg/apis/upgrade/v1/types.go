@@ -18,12 +18,27 @@ type UpgradeKube struct {
 
 // UpgradeKubeSpec is the spec for a UpgradeKube resource
 type UpgradeKubeSpec struct {
-	
+	DepTemp DeploymentTemplate `json:"deploymentTemplate"`
+	ServiceTemp ServiceTemplate `json:"serviceTemplate"`
+}
+
+type DeploymentTemplate struct{
+	Name string `json:"name"`
+	Namespace string `json:"namespace"`
+	Replicas int32 `json:"replicas"`
+	ImageName string `json:"imageName"`
+}
+
+type ServiceTemplate struct{
+	Name string `json:"name"`
+	Type string `json:"type"`
+	ServicePort int32 `json:"servicePort"`
 }
 
 // UpgradeKubeStatus is the status for a UpgradeKube resource
 type UpgradeKubeStatus struct {
-
+	DepCreated bool `json:"DepCreated"`
+	SvcCreated bool `json:"SvcCreated"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

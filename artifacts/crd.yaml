@@ -18,7 +18,7 @@ spec:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: UpgradeKube is the Schema for the upgradekubes API
+        description: UpgradeKube is a specification for a UpgradeKube resource
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,11 +33,56 @@ spec:
           metadata:
             type: object
           spec:
-            description: UpgradeKubeSpec defines the desired state of UpgradeKube
+            description: UpgradeKubeSpec is the spec for a UpgradeKube resource
+            properties:
+              deploymentTemplate:
+                properties:
+                  imageName:
+                    type: string
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                  replicas:
+                    format: int32
+                    type: integer
+                required:
+                - imageName
+                - name
+                - namespace
+                - replicas
+                type: object
+              serviceTemplate:
+                properties:
+                  name:
+                    type: string
+                  servicePort:
+                    format: int32
+                    type: integer
+                  type:
+                    type: string
+                required:
+                - name
+                - servicePort
+                - type
+                type: object
+            required:
+            - deploymentTemplate
+            - serviceTemplate
             type: object
           status:
-            description: UpgradeKubeStatus defines the observed state of UpgradeKube
+            description: UpgradeKubeStatus is the status for a UpgradeKube resource
+            properties:
+              DepCreated:
+                type: boolean
+              SvcCreated:
+                type: boolean
+            required:
+            - DepCreated
+            - SvcCreated
             type: object
+        required:
+        - spec
         type: object
     served: true
     storage: true

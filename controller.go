@@ -4,16 +4,20 @@ import (
 	"context"
 	"fmt"
 	"time"
+	kubeinformers "k8s.io/client-go/informers"
 
 	clientset "github.com/arshukla98/sample-controller/generated/clientset/versioned"
 	informers "github.com/arshukla98/sample-controller/generated/informers/externalversions"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	wait "k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 
 	upgradev1 "github.com/arshukla98/sample-controller/pkg/apis/upgrade/v1"
-	controller "github.com/arshukla98/sample-controller/pkg/controller"
 )
 
 type Controller struct {
@@ -25,13 +29,21 @@ type Controller struct {
 	queue workqueue.RateLimitingInterface
 
 	informer cache.SharedIndexInformer
+
+	kubeInformerFactory kubeinformers.SharedInformerFactory
+
+	kubeClient *kubernetes.Clientset
+
+	newClient *clientset.Clientset
 }
 
-func NewController(client *clientset.Clientset) *Controller {
+func NewController(client *clientset.Clientset, kubeClient *kubernetes.Clientset) *Controller {
 	fmt.Println("passing queue")
 	queue := workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "controller-name")
 
 	fmt.Println("passing informers")
+	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*5)
+
 	exampleInformerFactory := informers.NewSharedInformerFactory(client, time.Second*5)
 	upgradeInformer := exampleInformerFactory.Upgrade().V1().UpgradeKubes()
 	sharedIndexUpgradeInfomer := upgradeInformer.Informer()
@@ -65,8 +77,12 @@ func NewController(client *clientset.Clientset) *Controller {
 	})
 
 	exampleInformerFactory.Start(context.Background().Done())
+	kubeInformerFactory.Start(context.Background().Done())
 
 	c := &Controller{}
+	c.newClient = client
+	c.kubeClient = kubeClient
+	c.kubeInformerFactory = kubeInformerFactory
 	c.podsSynced = sharedIndexUpgradeInfomer.HasSynced
 	c.queue = queue
 	c.informer = sharedIndexUpgradeInfomer
@@ -165,7 +181,7 @@ func (c *Controller) syncHandler(key string) error {
 		return nil
 	}
 
-	uk, err = controller.ProcessKubeUpgrade(context.Background(), uk.DeepCopy())
+	uk, err = c.ProcessKubeUpgrade(context.Background(), uk.DeepCopy())
 	if err != nil {
 		return err
 	}
@@ -175,3 +191,128 @@ func (c *Controller) syncHandler(key string) error {
 	}
 	return nil
 }
+
+func(c *Controller) ProcessKubeUpgrade(ctx context.Context, uk *upgradev1.UpgradeKube) (*upgradev1.UpgradeKube, error) {
+	defer fmt.Println("Exiting ProcessKubeUpgrade")
+	fmt.Println("Entering ProcessKubeUpgrade")
+
+	// nodes, err := c.kubeInformerFactory.Core().V1().Nodes().Lister().List()
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if nodes == nil {
+	// 	return nil, fmt.Errorf("No nodes found")
+	// }
+	ukDeep := uk.DeepCopy()
+	depTemp := &ukDeep.Spec.DepTemp
+
+	if !ukDeep.Status.DepCreated && depTemp != nil {
+		obj := newDeployment(depTemp)
+		deployment, err := c.kubeClient.AppsV1().Deployments(depTemp.Namespace).Create(ctx, obj, metav1.CreateOptions{})
+		if err != nil {
+			return nil, err
+		}
+		if deployment == nil {
+			return nil, fmt.Errorf("nil deployment")
+		}
+		ukDeep.Status.DepCreated = true
+		_, err = c.newClient.UpgradeV1().UpgradeKubes(ukDeep.Namespace).Update(ctx, ukDeep, metav1.UpdateOptions{})
+		if err != nil {
+			return nil, err
+		}else{
+			return nil, nil
+		}
+	}
+
+	servTemp := &ukDeep.Spec.ServiceTemp
+
+	if !ukDeep.Status.SvcCreated && servTemp != nil {
+		obj := newService(servTemp, depTemp)
+		service, err := c.kubeClient.CoreV1().Services(depTemp.Namespace).Create(ctx, obj, metav1.CreateOptions{})
+		if err != nil {
+			return nil, err
+		}
+		if service == nil {
+			return nil, fmt.Errorf("nil service")
+		}
+		ukDeep.Status.SvcCreated = true
+		_, err = c.newClient.UpgradeV1().UpgradeKubes(ukDeep.Namespace).Update(ctx, ukDeep, metav1.UpdateOptions{})
+		if err != nil {
+			return nil, err
+		}else{
+			return nil, nil
+		}
+	}
+	//fmt.Println("Payload:", uk)
+	return nil, nil
+}
+
+func newDeployment(dep *upgradev1.DeploymentTemplate) *appsv1.Deployment {
+	labels := map[string]string{
+		"app":        dep.Name,
+		"controller": "sample-controller",
+	}
+	return &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      dep.Name,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &dep.Replicas,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: labels,
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: labels,
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  dep.Name,
+							Image: dep.ImageName,
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func newService(serviceTemp *upgradev1.ServiceTemplate, dep *upgradev1.DeploymentTemplate) *corev1.Service{
+	labels := map[string]string{
+		"app":        dep.Name,
+		"controller": "sample-controller",
+	}
+	return &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      serviceTemp.Name,
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: labels,
+			Type: corev1.ServiceType(serviceTemp.Type),
+			Ports: []corev1.ServicePort{
+				corev1.ServicePort{
+				Port: serviceTemp.ServicePort,
+				Protocol: corev1.ProtocolTCP,
+				},
+			},
+		},
+	}
+}
+/*
+spec:
+  deployment:
+    namespace:
+	name:
+	image:
+	replicas:
+  serviceName:
+    name:
+	type:
+	servicePort:
+status:
+   deploymentPods:
+   - 
+   servicePort:
+   targetPort:
+*/
