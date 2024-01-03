@@ -5,7 +5,7 @@ metadata:
     controller-gen.kubebuilder.io/version: v0.9.0
     api-approved.kubernetes.io: "unapproved"
   creationTimestamp: null
-  name: deployservice.upgrade.k8s.io
+  name: deployservices.upgrade.k8s.io
 spec:
   group: upgrade.k8s.io
   names:
