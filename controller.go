@@ -24,6 +24,10 @@ import (
 	listers "github.com/arshukla98/sample-controller/generated/listers/upgrade/v1"
 )
 
+const (
+	DeployServiceFinalizers string = "Deploy-Service-Finalizers"
+)
+
 type Controller struct {
 	podsSynced cache.InformerSynced
 
@@ -44,7 +48,7 @@ func NewController(client *clientset.Clientset, kubeClient *kubernetes.Clientset
 
 	fmt.Println("creating Shared Informers Factory")
 	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*60)
-   
+
 	exampleInformerFactory := informers.NewSharedInformerFactory(client, time.Second*30)
 	upgradeInformer := exampleInformerFactory.Upgrade().V1().DeployServices()
 
@@ -68,13 +72,15 @@ func NewController(client *clientset.Clientset, kubeClient *kubernetes.Clientset
 				fmt.Println("not updated")
 			}
 		},
-		DeleteFunc: func(obj interface{}) {
+		// It is not needed because we want to handler
+		// cleanup tasks while resource is being deleted.
+		/*DeleteFunc: func(obj interface{}) {
 			key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 			if err == nil {
 				queue.Add(key)
 			}
 			fmt.Println("Handling Delete Resource Event:", key)
-		},
+		},*/
 	})
 
 	exampleInformerFactory.Start(context.Background().Done())
@@ -149,10 +155,14 @@ func (c *Controller) processNextWorkItem(ctx context.Context) bool {
 		fmt.Println("Error Getting deployService CR", err.Error())
 		return true
 	}
+	fmt.Printf("%+v\n",ds)
+	fmt.Printf("%p\n",ds)
 
 	// do your work on the key.  This method will contains your "do stuff" logic
-	_, err = c.ProcessDeployService(context.Background(), ds.DeepCopy())
+	up, err := c.ProcessDeployService(context.Background(), ds.DeepCopy())
 	if err == nil {
+		fmt.Printf("%+v\n",up)
+		fmt.Printf("%p\n",up)
 		fmt.Println("processNextWorkItem Forget key:", key.(string))
 		c.queue.Forget(key)
 	} else if c.queue.NumRequeues(key) < 5 {
@@ -169,14 +179,51 @@ func (c *Controller) processNextWorkItem(ctx context.Context) bool {
 	return true
 }
 
-func (c *Controller) ProcessDeployService(ctx context.Context, dsDeepCopy *upgradev1.DeployService) (*upgradev1.DeployService, error) {
+func (c *Controller) ProcessDeployService(ctx context.Context, ds *upgradev1.DeployService) (*upgradev1.DeployService, error) {
 	defer fmt.Println("Exiting ProcessDeployService")
 	fmt.Println("Entering ProcessDeployService")
 
 	updated := false
-	depTemp := &dsDeepCopy.Spec.DepTemp
 
-	if !dsDeepCopy.Status.DepCreated && depTemp != nil {
+	if len(ds.ObjectMeta.Finalizers) == 0 {
+		fmt.Println("Add Finalizers for Proper Cleanup Tasks")
+		ds = c.ensureFinalizers(ctx, ds)
+		updated = true
+		fmt.Println("Resource Finalizers needs to be updated.")
+		updatedDS, err := c.newClient.UpgradeV1().DeployServices(ds.ObjectMeta.Namespace).Update(context.Background(), ds, metav1.UpdateOptions{})
+		if err != nil {
+			fmt.Println("Error Updating DeployServices", err.Error())
+			return nil, err
+		}
+		return updatedDS, nil
+	}
+
+	if !ds.ObjectMeta.DeletionTimestamp.IsZero() {
+		namespace, name := ds.Spec.DepTemp.Namespace, ds.Spec.DepTemp.Name
+		err := c.kubeClient.AppsV1().Deployments(namespace).Delete(ctx, name, metav1.DeleteOptions{})
+		if err != nil {
+			return nil, err
+		}
+
+		namespace, name = ds.Spec.DepTemp.Namespace, ds.Spec.ServiceTemp.Name
+		err = c.kubeClient.CoreV1().Services(namespace).Delete(ctx, name, metav1.DeleteOptions{})
+		if err != nil {
+			return nil, err
+		}
+		ds = c.removeFinalizers(ctx, ds)
+
+		updatedDS, err := c.newClient.UpgradeV1().
+			DeployServices(ds.Namespace).
+			Update(ctx, ds, metav1.UpdateOptions{})
+		if err != nil {
+			return nil, err
+		}
+		return updatedDS, nil
+	}
+
+	depTemp := &ds.Spec.DepTemp
+
+	if !ds.Status.DepCreated && depTemp != nil {
 		obj := newDeployment(depTemp)
 		deployment, err := c.kubeClient.AppsV1().Deployments(depTemp.Namespace).Create(ctx, obj, metav1.CreateOptions{})
 		if err != nil {
@@ -185,13 +232,13 @@ func (c *Controller) ProcessDeployService(ctx context.Context, dsDeepCopy *upgra
 		if deployment == nil {
 			return nil, fmt.Errorf("nil deployment")
 		}
-		dsDeepCopy.Status.DepCreated = true
+		ds.Status.DepCreated = true
 		updated = true
 	}
 
-	servTemp := &dsDeepCopy.Spec.ServiceTemp
+	servTemp := &ds.Spec.ServiceTemp
 
-	if !dsDeepCopy.Status.SvcCreated && servTemp != nil {
+	if !ds.Status.SvcCreated && servTemp != nil {
 		obj := newService(servTemp, depTemp)
 		service, err := c.kubeClient.CoreV1().Services(depTemp.Namespace).Create(ctx, obj, metav1.CreateOptions{})
 		if err != nil {
@@ -200,20 +247,20 @@ func (c *Controller) ProcessDeployService(ctx context.Context, dsDeepCopy *upgra
 		if service == nil {
 			return nil, fmt.Errorf("nil service")
 		}
-		dsDeepCopy.Status.SvcCreated = true
+		ds.Status.SvcCreated = true
 		updated = true
 	}
 	if updated {
 		fmt.Println("Resource needs to be updated.")
-		_, err := c.newClient.UpgradeV1().DeployServices(dsDeepCopy.ObjectMeta.Namespace).UpdateStatus(context.Background(), dsDeepCopy, metav1.UpdateOptions{})
+		updatedDS, err := c.newClient.UpgradeV1().DeployServices(ds.ObjectMeta.Namespace).UpdateStatus(context.Background(), ds, metav1.UpdateOptions{})
 		if err != nil {
-			fmt.Printf("SyncHandler: Error Updating DeployServices")
+			fmt.Println("Error Updating DeployServices", err.Error())
 			return nil, err
 		}
-		return dsDeepCopy, nil
+		return updatedDS, nil
 	}
 	fmt.Println("Resource does not need to be updated.")
-	return nil, nil
+	return ds, nil
 }
 
 func newDeployment(dep *upgradev1.DeploymentTemplate) *appsv1.Deployment {
@@ -267,4 +314,34 @@ func newService(serviceTemp *upgradev1.ServiceTemplate, dep *upgradev1.Deploymen
 			},
 		},
 	}
+}
+
+func (c *Controller) ensureFinalizers(ctx context.Context, ds *upgradev1.DeployService) *upgradev1.DeployService {
+	fmt.Println("Entering ensureFinalizers")
+	defer fmt.Println("Exiting ensureFinalizers")
+
+	if ds.ObjectMeta.DeletionTimestamp.IsZero() {
+		if len(ds.ObjectMeta.Finalizers) == 0 {
+			fmt.Println("Adding Finalizers to DeployService")
+			ds.ObjectMeta.Finalizers = append(ds.ObjectMeta.Finalizers, DeployServiceFinalizers)
+		}
+	}
+	return ds
+}
+
+func (c *Controller) removeFinalizers(ctx context.Context, ds *upgradev1.DeployService) *upgradev1.DeployService {
+	fmt.Println("Entering removeFinalizers")
+	defer fmt.Println("Exiting removeFinalizers")
+
+	finalizers := ds.ObjectMeta.Finalizers
+
+	if len(finalizers) > 0 {
+		fmt.Println("Removing Finalizers from DeployService")
+		for i, finalizer := range finalizers {
+			if finalizer == DeployServiceFinalizers {
+				ds.ObjectMeta.Finalizers = append(finalizers[0:i], finalizers[i+1:]...)
+			}
+		}
+	}
+	return ds
 }

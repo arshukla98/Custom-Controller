@@ -1,10 +1,10 @@
 init:
-	mkdir -p ~/go/bin ~/go/pkg ~/go/src/github.com/arshukla98/sample-controller && \
-	cp -r . ~/go/src/github.com/arshukla98/sample-controller && \
-	echo "Run -> cd ~/go/src/github.com/arshukla98/sample-controller"
+	mkdir -p ${HOME}/go/bin ${HOME}/go/pkg ${HOME}/go/src/github.com/arshukla98/sample-controller && \
+	cp -r . ${HOME}/go/src/github.com/arshukla98/sample-controller && \
+	echo "Run -> cd ${HOME}/go/src/github.com/arshukla98/sample-controller"
 
 env:
-	export GOPATH=~/go && \
+	export GOPATH=${HOME}/go && \
 	export GO111MODULE=off
 
 deps:
